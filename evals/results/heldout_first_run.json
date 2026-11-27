@@ -1,0 +1,53 @@
+{
+  "note": "First run on held-out phrasings, before any rule changes.",
+  "exact_match": 0.6538461538461539,
+  "n": 26,
+  "passed": 17,
+  "failures": [
+    {
+      "q": "ROAS on Meta tanked in October - what's going on?",
+      "passed": false,
+      "got": "unsupported/None/None/None/None/None"
+    },
+    {
+      "q": "Can you explain the dip in Google Ads CPA over the last month?",
+      "passed": false,
+      "got": "unsupported/None/None/None/None/None"
+    },
+    {
+      "q": "Is Instagram traffic converting worse than before?",
+      "passed": false,
+      "got": "unsupported/None/None/None/None/None"
+    },
+    {
+      "q": "Which of our campaigns are bleeding money?",
+      "passed": false,
+      "got": "unsupported/None/None/None/None/None"
+    },
+    {
+      "q": "Are mobile shoppers failing to check out?",
+      "passed": false,
+      "got": "unsupported/None/None/None/None/None"
+    },
+    {
+      "q": "What's a smart way to spread $40k over our campaigns next month?",
+      "passed": false,
+      "got": "unsupported/None/None/None/None/None"
+    },
+    {
+      "q": "Tell me what CPM means",
+      "passed": false,
+      "got": "unsupported/None/None/None/None/None"
+    },
+    {
+      "q": "How much did we spend on Meta last week?",
+      "passed": false,
+      "got": "unsupported/None/None/None/None/None"
+    },
+    {
+      "q": "Which Google campaigns should I cut?",
+      "passed": false,
+      "got": "unsupported/None/None/None/None/None"
+    }
+  ]
+}

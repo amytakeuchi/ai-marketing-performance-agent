@@ -1,0 +1,195 @@
+# Centralized marketing metric definitions (semantic layer).
+# Every number the agent reports is computed from these definitions - the LLM never writes SQL
+# and never does arithmetic. Ratio metrics are ALWAYS ratio-of-sums (never an average of daily ratios).
+
+source_model: marts.mart_campaign_daily
+time_column: date_day
+default_filter: is_paid          # spend-based metrics only make sense for paid campaigns
+time_grain: day
+
+# additive columns in the source model
+measures: [spend, impressions, clicks, sessions, add_to_carts, checkouts, orders, revenue,
+           new_customers, platform_reported_conversions, platform_reported_revenue]
+
+# dimension name -> column in the source model
+dimensions:
+  campaign: campaign_name
+  campaign_id: campaign_id
+  platform: platform
+  funnel_stage: funnel_stage
+  date: date_day
+  week: week_start
+  month: month_start
+
+attribution: >
+  Revenue and orders are order-level, last-click attributed to the campaign that drove the session.
+  Platform-reported conversions are exposed separately (platform_reported_roas) because ad platforms
+  use overlapping attribution windows and over-claim relative to the order system.
+
+metrics:
+  spend:
+    label: Total Ad Spend
+    description: Total media cost across the selected paid campaigns.
+    type: additive
+    measure: spend
+    unit: currency
+    higher_is_better: null
+    synonyms: [spend, ad spend, cost, media cost, budget spent]
+    dimensions: [campaign, campaign_id, platform, funnel_stage, date, week, month]
+    limitations: Excludes agency fees and non-media costs.
+
+  impressions:
+    label: Impressions
+    description: Number of times ads were served.
+    type: additive
+    measure: impressions
+    unit: count
+    higher_is_better: true
+    synonyms: [impressions, impr, reach]
+    dimensions: [campaign, campaign_id, platform, funnel_stage, date, week, month]
+
+  clicks:
+    label: Clicks
+    description: Ad clicks reported by the ad platform. NULL click values in the feed are ignored by SUM.
+    type: additive
+    measure: clicks
+    unit: count
+    higher_is_better: true
+    synonyms: [clicks, link clicks]
+    dimensions: [campaign, campaign_id, platform, funnel_stage, date, week, month]
+    limitations: 8 feed rows have NULL clicks; see validate_data.
+
+  conversions:
+    label: Conversions (Orders)
+    description: Orders attributed (last-click) to paid campaigns, from the order system.
+    type: additive
+    measure: orders
+    unit: count
+    higher_is_better: true
+    synonyms: [conversions, orders, purchases, sales, transactions]
+    dimensions: [campaign, campaign_id, platform, funnel_stage, date, week, month]
+
+  revenue:
+    label: Attributed Revenue
+    description: Order revenue attributed (last-click) to paid campaigns.
+    type: additive
+    measure: revenue
+    unit: currency
+    higher_is_better: true
+    synonyms: [revenue, attributed revenue, sales revenue, income]
+    dimensions: [campaign, campaign_id, platform, funnel_stage, date, week, month]
+
+  ctr:
+    label: Click-Through Rate (CTR)
+    description: Clicks divided by impressions.
+    type: ratio
+    numerator: clicks
+    denominator: impressions
+    unit: percent
+    higher_is_better: true
+    synonyms: [ctr, click-through rate, click through rate, clickthrough]
+    dimensions: [campaign, campaign_id, platform, funnel_stage, date, week, month]
+
+  cpc:
+    label: Cost per Click (CPC)
+    description: Spend divided by clicks.
+    type: ratio
+    numerator: spend
+    denominator: clicks
+    unit: currency
+    higher_is_better: false
+    synonyms: [cpc, cost per click]
+    dimensions: [campaign, campaign_id, platform, funnel_stage, date, week, month]
+
+  cpm:
+    label: Cost per 1,000 Impressions (CPM)
+    description: Spend per thousand impressions.
+    type: ratio
+    numerator: spend
+    denominator: impressions
+    scale: 1000
+    unit: currency
+    higher_is_better: false
+    synonyms: [cpm, cost per mille, cost per thousand]
+    dimensions: [campaign, campaign_id, platform, funnel_stage, date, week, month]
+
+  cpa:
+    label: Cost per Acquisition (CPA)
+    description: Spend divided by attributed orders.
+    type: ratio
+    numerator: spend
+    denominator: orders
+    unit: currency
+    higher_is_better: false
+    synonyms: [cpa, cost per acquisition, cost per order, cost per conversion, cost per purchase]
+    dimensions: [campaign, campaign_id, platform, funnel_stage, date, week, month]
+    driver_chain:
+      - {name: "Media cost (CPM)", num: spend, den: impressions}
+      - {name: "Click-through (1/CTR)", num: impressions, den: clicks}
+      - {name: "Click-to-session loss", num: clicks, den: sessions}
+      - {name: "Session-to-order (1/CVR)", num: sessions, den: orders}
+
+  roas:
+    label: Return on Ad Spend (ROAS)
+    description: Attributed revenue divided by ad spend (order-level, last-click).
+    type: ratio
+    numerator: revenue
+    denominator: spend
+    unit: ratio
+    higher_is_better: true
+    synonyms: [roas, return on ad spend, return on advertising spend, ad return]
+    dimensions: [campaign, campaign_id, platform, funnel_stage, date, week, month]
+    limitations: >
+      Last-click attribution; not incrementality. Correlational - cannot separate paid effect
+      from organic demand.
+    driver_chain:
+      - {name: "Reach efficiency (impressions per $)", num: impressions, den: spend}
+      - {name: "CTR", num: clicks, den: impressions}
+      - {name: "Click-to-session rate", num: sessions, den: clicks}
+      - {name: "Conversion rate (orders/session)", num: orders, den: sessions}
+      - {name: "AOV", num: revenue, den: orders}
+
+  platform_reported_roas:
+    label: Platform-Reported ROAS
+    description: Revenue claimed by the ad platforms divided by spend. Inflated by overlapping attribution windows.
+    type: ratio
+    numerator: platform_reported_revenue
+    denominator: spend
+    unit: ratio
+    higher_is_better: true
+    synonyms: [platform roas, platform reported roas, reported roas]
+    dimensions: [campaign, campaign_id, platform, funnel_stage, date, week, month]
+    limitations: Not comparable to ROAS; shown only to quantify platform over-claiming.
+
+  cac:
+    label: Customer Acquisition Cost (CAC)
+    description: Spend divided by new customers (first-ever orders).
+    type: ratio
+    numerator: spend
+    denominator: new_customers
+    unit: currency
+    higher_is_better: false
+    synonyms: [cac, customer acquisition cost, cost per new customer]
+    dimensions: [campaign, campaign_id, platform, funnel_stage, date, week, month]
+
+  conversion_rate:
+    label: Conversion Rate
+    description: Orders divided by website sessions.
+    type: ratio
+    numerator: orders
+    denominator: sessions
+    unit: percent
+    higher_is_better: true
+    synonyms: [conversion rate, cvr, site conversion]
+    dimensions: [campaign, campaign_id, platform, funnel_stage, date, week, month]
+
+  aov:
+    label: Average Order Value (AOV)
+    description: Attributed revenue divided by orders.
+    type: ratio
+    numerator: revenue
+    denominator: orders
+    unit: currency
+    higher_is_better: true
+    synonyms: [aov, average order value, basket size]
+    dimensions: [campaign, campaign_id, platform, funnel_stage, date, week, month]

@@ -1,0 +1,34 @@
+version: 2
+
+sources:
+  - name: raw
+    schema: raw
+    description: "Synthetic raw feeds. Defects are planted on purpose; tests here run as warnings to *detect* them."
+    tables:
+      - name: campaigns
+      - name: landing_pages
+      - name: customers
+      - name: ad_performance
+        data_tests:
+          - unique_combination:
+              arguments:
+                columns: [date, campaign_id]
+              config: {severity: warn}   # known: 12 duplicated rows, removed in stg_ad_performance
+        columns:
+          - name: clicks
+            data_tests:
+              - not_null: {config: {severity: warn}}   # known: 8 NULL click counts
+      - name: web_analytics
+      - name: orders
+        columns:
+          - name: order_id
+            data_tests: [unique, not_null]
+          - name: campaign_id
+            data_tests:
+              - relationships:
+                  arguments:
+                    to: source('raw', 'campaigns')
+                    field: campaign_id
+                  config:
+                    severity: warn          # known: 6 orders with legacy campaign id
+                    where: "campaign_id <> 'UNATTRIBUTED'"

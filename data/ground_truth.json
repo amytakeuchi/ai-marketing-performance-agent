@@ -1,0 +1,61 @@
+{
+  "seed": 42,
+  "data_start": "2025-11-01",
+  "data_end": "2026-10-31",
+  "scenarios": {
+    "S1_meta_lal_creative_fatigue": {
+      "description": "Meta Lookalike campaign: budget +45% and CTR decays linearly to -50% over October (creative fatigue). Click-through rate is the dominant ROAS driver.",
+      "campaign_id": "META_PROSP_LAL",
+      "start": "2026-10-01",
+      "end": "2026-10-31",
+      "spend_multiplier": 1.45,
+      "ctr_decay_to": 0.5,
+      "expected_dominant_factor": "CTR"
+    },
+    "S2_meta_adv_cpm_spike": {
+      "description": "Meta Advantage+ Catalog: CPM +22% from 2026-10-10 (auction pressure). Secondary driver.",
+      "campaign_id": "META_ADV_CAT",
+      "start": "2026-10-10",
+      "end": "2026-10-31",
+      "cpm_multiplier": 1.22
+    },
+    "S3_mobile_checkout_bug": {
+      "description": "Mobile checkout->purchase rate on lp_collection_v2 drops 45% from 2026-10-15 (broken payment button). Still ongoing at end of data.",
+      "landing_page_id": "lp_collection_v2",
+      "device": "mobile",
+      "stage": "checkout_to_purchase",
+      "start": "2026-10-15",
+      "end": "2026-10-31",
+      "rate_multiplier": 0.55
+    },
+    "S4_brand_search_saturated": {
+      "description": "Google Brand Search has the highest average ROAS but strongly diminishing returns (spend elasticity 0.35). It captures existing demand, so the optimizer holds it flat by policy.",
+      "campaign_id": "GOOG_BRAND",
+      "elasticity": 0.35
+    },
+    "DQ_duplicates": {
+      "description": "12 duplicated rows in raw.ad_performance (de-duplicated in staging)."
+    },
+    "DQ_null_clicks": {
+      "description": "8 ad rows with NULL clicks."
+    },
+    "DQ_missing_days": {
+      "description": "GOOG_YT ad-platform feed missing 2026-09-14..2026-09-16 (orders/sessions exist, spend rows do not)."
+    },
+    "DQ_orphan_orders": {
+      "description": "6 orders reference unknown campaign CMP_LEGACY_X (mapped to UNATTRIBUTED)."
+    }
+  },
+  "campaigns": [
+    "META_PROSP_LAL",
+    "META_PROSP_INT",
+    "META_RETARG",
+    "META_ADV_CAT",
+    "GOOG_BRAND",
+    "GOOG_NONBRAND",
+    "GOOG_SHOP",
+    "GOOG_PMAX",
+    "GOOG_YT",
+    "GOOG_DISP_RT"
+  ]
+}
